@@ -44,7 +44,7 @@ spec:
             - {{ . }}
             {{- end }}
           {{- else }}
-          args: ["odabot", "--settings", "/settings.toml", "make_galaxy_tools", "--loop", "30"]
+          args: ["odabot", "--settings", "/settings.toml", "make-galaxy-tools", "--loop", "30"]
           {{- end }}
           {{- range $idx, $content := default (list) .Values.extra_env_var }} 
           - name: {{ $content.name }}
