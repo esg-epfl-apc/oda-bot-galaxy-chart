@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "oda-bot-galaxy.fullname" . }}
+  labels:
+    {{- include "oda-bot-galaxy.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "oda-bot-galaxy.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "oda-bot-galaxy.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if and ( hasKey .Values "commandOverride" ) .Values.commandOverride }}
+          command: 
+            {{- range .Values.commandOverride }}
+            - {{ . }}
+            {{- end }}
+          {{- end }}
+          {{- if and ( hasKey .Values "argsOverride" ) .Values.argsOverride }}
+          args: 
+            {{- range .Values.argsOverride }}
+            - {{ . }}
+            {{- end }}
+          {{- else }}
+          args: ["odabot", "--settings", "/settings.toml", "make_galaxy_tools", "--loop", "30"]
+          {{- end }}
+          {{- range $idx, $content := default (list) .Values.extra_env_var }} 
+          - name: {{ $content.name }}
+            value: "{{ $content.value }}"
+          {{- end }}
+
+          volumeMounts:
+          - name: settings
+            mountPath: /settings.toml
+            subPath: settings.toml
+          - name: repo-cache
+            mountPath: /nb2galaxy-cache
+          - name: git-credentials
+            subPath: .git-credentials
+            mountPath: /.git-credentials
+
+      volumes:
+      - name: settings
+        configMap:
+          name: {{ include "oda-bot-galaxy.fullname" . }}-conf
+      - name: repo-cache
+        persistentVolumeClaim:
+          claimName: repo-cache
+      - name: git-credentials
+        secret:
+          secretName: {{ .Values.externalSecrets.github-cred }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
