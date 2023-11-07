@@ -53,7 +53,7 @@ tolerations: []
 affinity: {}
 
 externalSecrets:
-  github-cred: github-cred
+  github_cred: github-cred
 
 storage_class: nfs
 

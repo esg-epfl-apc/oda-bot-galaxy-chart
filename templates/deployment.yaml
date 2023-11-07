@@ -70,7 +70,7 @@ spec:
           claimName: repo-cache
       - name: git-credentials
         secret:
-          secretName: {{ .Values.externalSecrets.github-cred }}
+          secretName: {{ .Values.externalSecrets.github_cred }}
 
       {{- with .Values.nodeSelector }}
       nodeSelector:
