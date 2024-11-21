@@ -46,11 +46,23 @@ spec:
           {{- else }}
           args: ["odabot", "--settings", "/settings.toml", "make-galaxy-tools", "--loop", "30"]
           {{- end }}
+          {{- if ( hasKey .Values.externalSecrets "smtp" ) }}
+          envFrom:
+          - secretRef:
+              name: {{ .Values.externalSecrets.smtp }}
+          {{- end }}
+          env:
+          {{- if ( hasKey .Values.externalSecrets "gitlab" ) }}
+          - name: GITLAB_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.externalSecrets.gitlab }}
+                key: token
+          {{- end }}
           {{- range $idx, $content := default (list) .Values.extra_env_var }} 
           - name: {{ $content.name }}
             value: "{{ $content.value }}"
           {{- end }}
-
           volumeMounts:
           - name: settings
             mountPath: /settings.toml
